@@ -239,6 +239,8 @@ const AppShell = ({ children }) => {
             <LogOut size={16} />
             <span>Sair</span>
           </button>
+
+          <p className="app-shell__signature">Desenvolvido por Max Pedroza</p>
         </div>
       </aside>
 

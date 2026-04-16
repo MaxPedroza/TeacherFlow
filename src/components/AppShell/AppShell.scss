@@ -383,6 +383,14 @@
       }
     }
 
+    &__signature {
+      margin: 0;
+      text-align: center;
+      font-size: 0.75rem;
+      color: $text-muted;
+      opacity: 0.85;
+    }
+
     &__content-wrap {
       padding-bottom: 0;
     }
