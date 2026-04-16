@@ -1,0 +1,59 @@
+// TeacherFlow - Design System Variables
+
+$color-scheduled-hex: #3B82F6;
+
+:root {
+  // Base Colors (Dark Mode)
+  --color-background: #0F172A; // Slate 900
+  --color-surface: #1E293B;    // Slate 800
+  --color-surface-elevated: #243247;
+  --color-text-primary: #F1F5F9; // Slate 100
+  --color-text-secondary: #94A3B8; // Slate 400
+  --color-border: rgba(148, 163, 184, 0.18);
+  --shadow-soft: 0 24px 60px rgba(15, 23, 42, 0.28);
+
+  // Status Colors
+  --status-pending: #F59E0B;   // Amber 500
+  --status-paid: #22C55E;      // Emerald 500
+  --status-scheduled: #{$color-scheduled-hex};
+  --color-danger: #EF4444;     // Red 500
+
+  // Origin & Type Colors (Business Rules)
+  --color-particular: #A855F7; // Purple 500
+  --color-school: #06B6D4;     // Cyan 500
+  --color-demo: #64748B;       // Slate 500 (Aulas demonstrativas)
+
+  // Layout
+  --mobile-nav-height: 64px;
+  --sidebar-width: 260px;
+  --border-radius: 8px;
+}
+
+:root[data-theme='light'] {
+  --color-background: #E8EEF7;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #F3F7FD;
+  --color-text-primary: #162033;
+  --color-text-secondary: #3E4E67;
+  --color-border: rgba(63, 79, 104, 0.24);
+  --shadow-soft: 0 24px 60px rgba(22, 32, 51, 0.12);
+}
+
+// SCSS Mappings for BEM usage
+$bg: var(--color-background);
+$surface: var(--color-surface);
+$text: var(--color-text-primary);
+$text-muted: var(--color-text-secondary);
+
+$pending: var(--status-pending);
+$paid: var(--status-paid);
+$scheduled: $color-scheduled-hex;
+$danger: var(--color-danger);
+
+$particular: var(--color-particular);
+$school: var(--color-school);
+$demo: var(--color-demo);
+
+$radius: var(--border-radius);
+$mobile-nav-height: var(--mobile-nav-height);
+$sidebar-width: var(--sidebar-width);

@@ -1,0 +1,27 @@
+@use '../../styles/variables' as *;
+
+.stat-card {
+  background-color: $surface;
+  padding: 1.5rem;
+  border-radius: $radius;
+  border-left: 4px solid $text-muted;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &__label {
+    font-size: 0.875rem;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__value {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  &--paid { border-left-color: $paid; }
+  &--pending { border-left-color: $pending; }
+  &--scheduled { border-left-color: $scheduled; }
+}

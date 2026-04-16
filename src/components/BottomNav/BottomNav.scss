@@ -1,0 +1,50 @@
+@use "../../styles/variables" as *;
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: $mobile-nav-height;
+  background-color: $surface;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0 0.4rem;
+  border-top: 1px solid var(--color-border);
+  z-index: 100;
+  backdrop-filter: blur(18px);
+
+  &__link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    text-decoration: none;
+    color: $text-muted;
+    font-size: 0.75rem;
+    gap: 4px;
+
+    svg {
+      transition: transform 0.2s ease;
+    }
+
+    &--active {
+      color: $scheduled;
+      font-weight: bold;
+      
+      svg {
+        transform: scale(1.1);
+      }
+    }
+  }
+}
+
+@media (min-width: 1024px) {
+  .bottom-nav {
+    display: none;
+  }
+}

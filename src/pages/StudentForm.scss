@@ -1,0 +1,96 @@
+@use '../styles/variables' as *;
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.student-form {
+  background-color: $surface;
+  padding: 2rem;
+  border-radius: $radius;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    h2 { margin: 0; font-size: 1.5rem; }
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    color: $text-muted;
+    cursor: pointer;
+    &:hover { color: $text; }
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  &__error {
+    padding: 0.85rem 1rem;
+    border-radius: 0.85rem;
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #fecaca;
+  }
+
+  &__checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: $text;
+  }
+
+  &__actions {
+    margin-top: 1rem;
+    .btn-primary { width: 100%; justify-content: center; }
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.5rem;
+  label { font-size: 0.875rem; color: $text-muted; }
+  input, select {
+    background-color: rgba(15, 23, 42, 0.24);
+    border: 1px solid var(--color-border);
+    padding: 0.75rem;
+    border-radius: 6px;
+    color: $text;
+    width: 100%;
+    min-width: 0;
+    &:focus { outline: none; border-color: $scheduled; }
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  > * {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

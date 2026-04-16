@@ -1,0 +1,603 @@
+@use '../styles/variables' as *;
+
+.schedule {
+  &__header {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  &__feedback {
+    margin: -1rem 0 1rem;
+    color: #86efac;
+    font-size: 0.9rem;
+  }
+
+  &__controls {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  &__view-switcher {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0;
+  }
+
+  &__view-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.2rem;
+    border: 2px solid var(--color-border);
+    border-radius: 0.75rem;
+    background-color: transparent;
+    color: $text-muted;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: $scheduled;
+      color: $scheduled;
+    }
+
+    &--active {
+      background-color: $scheduled;
+      border-color: $scheduled;
+      color: white;
+    }
+  }
+
+  &__filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+
+      span {
+        font-size: 0.875rem;
+        color: $text-muted;
+        font-weight: 500;
+      }
+
+      select {
+        background-color: rgba(15, 23, 42, 0.24);
+        border: 1px solid var(--color-border);
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        color: $text;
+
+        &:focus {
+          outline: none;
+          border-color: $scheduled;
+        }
+      }
+    }
+  }
+
+  // CALENDAR VIEW
+  &__calendar {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+
+  &__calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+
+    h2 {
+      flex: 1;
+      text-align: center;
+      text-transform: capitalize;
+      margin: 0;
+    }
+  }
+
+  &__nav-btn {
+    padding: 0.6rem 1rem;
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--color-border);
+    border-radius: 0.6rem;
+    color: $text;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: rgba(59, 130, 246, 0.2);
+      border-color: $scheduled;
+    }
+  }
+
+  &__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+
+    > div {
+      text-align: center;
+      font-weight: 600;
+      color: $text-muted;
+      padding: 0.5rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  &__day {
+    aspect-ratio: 1;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+    background-color: rgba(15, 23, 42, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+
+    &:hover:not(.schedule__day--empty) {
+      border-color: $scheduled;
+      background-color: rgba(59, 130, 246, 0.08);
+    }
+
+    &--empty {
+      background-color: rgba(0, 0, 0, 0.1);
+      cursor: default;
+    }
+
+    &--has-lessons {
+      border-color: $scheduled;
+    }
+
+    &--today {
+      border-color: rgba(59, 130, 246, 0.9);
+      background: linear-gradient(180deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.08));
+      box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
+    }
+  }
+
+  &__day-number {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: $text;
+  }
+
+  &__day-lessons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  &__lesson-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  &__lesson-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.15rem;
+  }
+
+  &__lesson-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &--scheduled {
+      background-color: #60a5fa;
+    }
+
+    &--pending {
+      background-color: #fbbf24;
+    }
+
+    &--paid {
+      background-color: #34d399;
+    }
+  }
+
+  &__lesson-name,
+  &__lesson-empty {
+    font-size: 0.72rem;
+    line-height: 1.2;
+    color: $text-muted;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__lesson-empty {
+    white-space: normal;
+  }
+
+  &__lesson-instrument {
+    font-size: 0.67rem;
+    line-height: 1.2;
+    color: rgba($text-muted, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__lesson-more {
+    font-size: 0.7rem;
+    color: $text-muted;
+    font-weight: 600;
+  }
+
+  // WEEK VIEW
+  &__week {
+    padding: 1.5rem;
+
+    h2 {
+      margin: 0;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  &__week-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  &__week-item {
+    display: grid;
+    grid-template-columns: 140px 1fr 120px;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    background-color: rgba(15, 23, 42, 0.12);
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: $scheduled;
+      background-color: rgba(59, 130, 246, 0.08);
+    }
+  }
+
+  &__item-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: flex-end;
+  }
+
+  &__week-date {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    strong {
+      color: $text;
+    }
+
+    span {
+      font-size: 0.875rem;
+      color: $text-muted;
+    }
+  }
+
+  &__week-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    strong {
+      color: $text;
+    }
+
+    p {
+      font-size: 0.875rem;
+      color: $text-muted;
+    }
+  }
+
+  &__list {
+    padding: 1.5rem;
+
+    h2 {
+      margin: 0;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  &__list-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  &__list-item {
+    display: grid;
+    grid-template-columns: 140px 1fr 180px;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    background-color: rgba(15, 23, 42, 0.12);
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: $scheduled;
+      background-color: rgba(59, 130, 246, 0.08);
+    }
+  }
+
+  &__list-left,
+  &__list-date {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    strong {
+      color: $text;
+      font-size: 0.95rem;
+    }
+
+    span {
+      font-size: 0.875rem;
+      color: $text-muted;
+    }
+  }
+
+  &__list-middle {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    strong {
+      color: $text;
+    }
+
+    p {
+      font-size: 0.875rem;
+      color: $text-muted;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__list-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+
+    strong {
+      color: $text;
+    }
+  }
+
+  &__item-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  &__action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.55rem;
+    background-color: rgba(15, 23, 42, 0.16);
+    color: $text;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: $scheduled;
+      background-color: rgba(59, 130, 246, 0.12);
+    }
+
+    &--danger:hover {
+      border-color: #f87171;
+      background-color: rgba(248, 113, 113, 0.12);
+      color: #fecaca;
+    }
+  }
+
+  &__status {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+
+    &--scheduled {
+      background-color: rgba(96, 165, 250, 0.2);
+      color: #60a5fa;
+    }
+
+    &--pending {
+      background-color: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+
+    &--paid {
+      background-color: rgba(52, 211, 153, 0.2);
+      color: #34d399;
+    }
+  }
+
+  &__empty {
+    text-align: center;
+    color: $text-muted;
+    padding: 2rem 1rem;
+  }
+}
+
+:root[data-theme='light'] {
+  .schedule {
+    &__filters label select,
+    &__action-btn,
+    &__nav-btn {
+      background-color: #ffffff;
+    }
+
+    &__day,
+    &__week-item,
+    &__list-item {
+      background-color: rgba(255, 255, 255, 0.88);
+      border-color: rgba(63, 79, 104, 0.24);
+    }
+
+    &__day--empty {
+      background-color: rgba(148, 163, 184, 0.15);
+    }
+
+    &__day--today {
+      border-color: rgba(37, 99, 235, 0.7);
+      background: linear-gradient(180deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.09));
+      box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.25);
+    }
+
+    &__lesson-name,
+    &__lesson-empty,
+    &__lesson-instrument,
+    &__week-info p,
+    &__list-middle p,
+    &__week-date span,
+    &__list-date span,
+    &__weekdays > div {
+      color: #445875;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .schedule {
+    &__header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    &__controls {
+      flex-direction: column;
+    }
+
+    &__filters {
+      grid-template-columns: 1fr;
+    }
+
+    &__grid {
+      gap: 0.3rem;
+    }
+
+    &__day {
+      aspect-ratio: auto;
+      min-height: 80px;
+      padding: 0.4rem;
+    }
+
+    &__lesson-name,
+    &__lesson-empty {
+      font-size: 0.68rem;
+    }
+
+    &__lesson-instrument {
+      font-size: 0.63rem;
+    }
+
+    &__week-item,
+    &__list-item {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    &__list-right {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    &__item-side {
+      align-items: stretch;
+    }
+
+    &__item-actions {
+      justify-content: flex-start;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .schedule {
+    &__view-switcher {
+      flex-wrap: wrap;
+    }
+
+    &__view-btn {
+      flex: 1;
+      min-width: 100px;
+      font-size: 0.875rem;
+
+      span {
+        display: none;
+      }
+
+      svg {
+        margin: 0;
+      }
+    }
+
+    &__weekdays {
+      grid-template-columns: repeat(7, 1fr);
+
+      > div {
+        font-size: 0.7rem;
+        padding: 0.25rem;
+      }
+    }
+
+    &__day-number {
+      font-size: 0.85rem;
+    }
+
+    &__day-lessons {
+      gap: 0.2rem;
+    }
+
+    &__lesson-more {
+      font-size: 0.6rem;
+    }
+  }
+}
