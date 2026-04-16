@@ -28,10 +28,23 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Validate Firebase service account secret
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TEACHERFLOW_DB0BE }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "Secret FIREBASE_SERVICE_ACCOUNT_TEACHERFLOW_DB0BE não encontrado."
+            echo "Adicione o JSON da service account em: Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Write Firebase credentials file
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TEACHERFLOW_DB0BE }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$HOME/firebase-service-account.json"
+
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TEACHERFLOW_DB0BE }}
-          channelId: live
-          projectId: teacherflow-db0be
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$HOME/firebase-service-account.json"
+          npx firebase-tools deploy --only hosting --project teacherflow-db0be --non-interactive
