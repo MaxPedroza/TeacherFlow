@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
+import { LESSON_STATUS_OPTIONS } from '../../constants/lessonStatus.js';
 import './LessonForm.scss';
 
 const toInputDateTime = (dateValue) => {
@@ -160,9 +161,11 @@ const LessonForm = ({ lesson, students, initialDate, onClose, onSave }) => {
                 value={formData.status}
                 onChange={(event) => setField('status', event.target.value)}
               >
-                <option value="scheduled">Agendada</option>
-                <option value="pending">Pendente</option>
-                <option value="paid">Paga</option>
+                {LESSON_STATUS_OPTIONS.map((statusOption) => (
+                  <option key={statusOption.value} value={statusOption.value}>
+                    {statusOption.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

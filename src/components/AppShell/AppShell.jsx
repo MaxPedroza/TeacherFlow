@@ -12,6 +12,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import BottomNav from '../BottomNav/BottomNav.jsx';
+import AIAssistant from '../AIAssistant/AIAssistant.jsx';
 import { useAuthContext } from '../../context/AuthContext.jsx';
 import { useLessons } from '../../hooks/useLessons.js';
 import { useStudents } from '../../hooks/useStudents.js';
@@ -42,7 +43,7 @@ const navigationItems = [
 const AppShell = ({ children }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
-  const { lessons, loading: lessonsLoading, updateLessonStatus } = useLessons();
+  const { lessons, loading: lessonsLoading, createLesson, updateLessonStatus } = useLessons();
   const { students, loading: studentsLoading } = useStudents();
   const [theme, setTheme] = useState(() => localStorage.getItem(STORAGE_KEY) || 'dark');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -76,7 +77,8 @@ const AppShell = ({ children }) => {
     return lessons
       .filter((lesson) => {
         const lessonDate = lesson.date?.toDate?.();
-        return lesson.status === 'pending' && lessonDate && lessonDate < now;
+        const isReceivablePending = lesson.status === 'pending' || lesson.status === 'no_show';
+        return isReceivablePending && lessonDate && lessonDate < now;
       })
       .sort((a, b) => {
         const firstDate = a.date?.toDate?.()?.getTime() || 0;
@@ -342,7 +344,7 @@ const AppShell = ({ children }) => {
                       <article key={lesson.id} className="app-shell__notification-item">
                         <div>
                           <strong>{student?.name || 'Aluno'}</strong>
-                          <p>{formatDateTime(lessonDate)} • pendente</p>
+                          <p>{formatDateTime(lessonDate)} • {lesson.status === 'no_show' ? 'falta sem aviso' : 'pendente'}</p>
                         </div>
 
                         <div className="app-shell__notification-actions">
@@ -386,7 +388,12 @@ const AppShell = ({ children }) => {
           ) : null}
         </aside>
       ) : null}
-    </div>
+      <AIAssistant
+        students={students}
+        lessons={lessons}
+        createLesson={createLesson}
+        updateLessonStatus={updateLessonStatus}
+      />    </div>
   );
 };
 

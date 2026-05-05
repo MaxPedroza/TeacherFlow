@@ -3,6 +3,7 @@ import { Calendar, List, Calendar as CalendarWeek, PencilLine, Plus, Trash2 } fr
 import LessonForm from '../components/LessonForm/LessonForm.jsx';
 import { useLessons } from '../hooks/useLessons.js';
 import { useStudents } from '../hooks/useStudents.js';
+import { getLessonStatusLabel } from '../constants/lessonStatus.js';
 import './Schedule.scss';
 
 const formatCurrency = (value) =>
@@ -212,6 +213,8 @@ const Schedule = () => {
               <option value="scheduled">Agendadas</option>
               <option value="pending">Pendentes</option>
               <option value="paid">Pagas</option>
+              <option value="canceled_in_time">Faltas avisadas</option>
+              <option value="no_show">Faltas sem aviso</option>
             </select>
           </label>
 
@@ -346,11 +349,7 @@ const Schedule = () => {
 
                     <div className="schedule__item-side">
                       <span className={`schedule__status schedule__status--${lesson.status}`}>
-                        {lesson.status === 'scheduled'
-                          ? 'Agendada'
-                          : lesson.status === 'pending'
-                            ? 'Pendente'
-                            : 'Paga'}
+                        {getLessonStatusLabel(lesson.status)}
                       </span>
 
                       <div className="schedule__item-actions">
@@ -414,11 +413,7 @@ const Schedule = () => {
 
                       <div className="schedule__list-right">
                         <span className={`schedule__status schedule__status--${lesson.status}`}>
-                          {lesson.status === 'scheduled'
-                            ? 'Agendada'
-                            : lesson.status === 'pending'
-                              ? 'Pendente'
-                              : 'Paga'}
+                          {getLessonStatusLabel(lesson.status)}
                         </span>
                         <strong>{formatCurrency(lesson.rateApplied)}</strong>
 

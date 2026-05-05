@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../services/firebase.js';
 import { useAuthContext } from '../context/AuthContext.jsx';
+import { normalizeLessonStatus } from '../constants/lessonStatus.js';
 
 const normalizeLessonDate = (value) => {
   if (value instanceof Date) return value;
@@ -39,6 +40,7 @@ export const useLessons = () => {
       const data = snapshot.docs.map((lessonDoc) => ({
         id: lessonDoc.id,
         ...lessonDoc.data(),
+        status: normalizeLessonStatus(lessonDoc.data()?.status || 'scheduled'),
       }));
 
       data.sort((firstLesson, secondLesson) => {
@@ -123,7 +125,7 @@ export const useLessons = () => {
         rateApplied,
         content: payload.content?.trim() || '',
         type: payload.type || 'Normal',
-        status: payload.status || 'scheduled',
+        status: normalizeLessonStatus(payload.status || 'scheduled'),
         recurrenceWeeks,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -152,7 +154,7 @@ export const useLessons = () => {
       rateApplied,
       content: payload.content?.trim() || '',
       type: payload.type || 'Normal',
-      status: payload.status || 'scheduled',
+      status: normalizeLessonStatus(payload.status || 'scheduled'),
       updatedAt: serverTimestamp(),
     });
 

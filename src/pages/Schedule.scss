@@ -224,6 +224,14 @@
     &--paid {
       background-color: #34d399;
     }
+
+    &--canceled_in_time {
+      background-color: #94a3b8;
+    }
+
+    &--no_show {
+      background-color: #fbbf24;
+    }
   }
 
   &__lesson-name,
@@ -455,6 +463,16 @@
     &--paid {
       background-color: rgba(52, 211, 153, 0.2);
       color: #34d399;
+    }
+
+    &--canceled_in_time {
+      background-color: rgba(148, 163, 184, 0.2);
+      color: #cbd5e1;
+    }
+
+    &--no_show {
+      background-color: rgba(251, 191, 36, 0.2);
+      color: #fde68a;
     }
   }
 

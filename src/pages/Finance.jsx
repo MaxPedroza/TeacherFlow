@@ -3,10 +3,22 @@ import { PencilLine, Plus } from 'lucide-react';
 import LessonForm from '../components/LessonForm/LessonForm.jsx';
 import { useLessons } from '../hooks/useLessons.js';
 import { useStudents } from '../hooks/useStudents.js';
+import {
+  LESSON_STATUS_OPTIONS,
+  getLessonStatusLabel,
+  isReceivableStatus,
+} from '../constants/lessonStatus.js';
 import './Finance.scss';
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+
+const normalizeText = (value) =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 
 const formatDateTime = (timestampValue) => {
   const date = timestampValue?.toDate?.();
@@ -20,16 +32,16 @@ const formatDateTime = (timestampValue) => {
   });
 };
 
-const statusLabel = {
-  scheduled: 'Agendada',
-  pending: 'Pendente',
-  paid: 'Paga',
-};
-
 const Finance = () => {
   const [periodFilter, setPeriodFilter] = useState('month');
+  const [customMonth, setCustomMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
   const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [originFilter, setOriginFilter] = useState('all');
+  const [studentFilter, setStudentFilter] = useState('all');
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [isLessonFormOpen, setIsLessonFormOpen] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -53,6 +65,16 @@ const Finance = () => {
     [students]
   );
 
+  const availableStudents = useMemo(
+    () => [
+      { id: 'all', name: 'Todos os alunos' },
+      ...students
+        .map((student) => ({ id: student.id, name: student.name || 'Aluno sem nome' }))
+        .sort((firstStudent, secondStudent) => firstStudent.name.localeCompare(secondStudent.name, 'pt-BR')),
+    ],
+    [students]
+  );
+
   const activeStudents = useMemo(
     () => students.filter((student) => student.status === 'active'),
     [students]
@@ -62,6 +84,23 @@ const Finance = () => {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    const startOfWeek = new Date(startOfDay);
+    startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59);
+
+    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    const [customYear, customMonthIndex] = customMonth.split('-').map(Number);
+
+    const currentQuarter = Math.floor(now.getMonth() / 3);
+    const quarterStart = new Date(now.getFullYear(), currentQuarter * 3, 1);
+    const quarterEnd = new Date(now.getFullYear(), currentQuarter * 3 + 3, 0, 23, 59, 59);
+
+    const semesterStart = new Date(now.getFullYear(), now.getMonth() < 6 ? 0 : 6, 1);
+    const semesterEnd = new Date(now.getFullYear(), now.getMonth() < 6 ? 6 : 12, 0, 23, 59, 59);
 
     return lessons
       .map((lesson) => {
@@ -80,28 +119,46 @@ const Finance = () => {
         const periodMatch =
           periodFilter === 'all' ||
           (periodFilter === 'today' && lessonDate >= startOfDay && lessonDate <= endOfDay) ||
+          (periodFilter === 'week' && lessonDate >= startOfWeek && lessonDate <= endOfWeek) ||
           (periodFilter === 'month' &&
             lessonDate.getMonth() === now.getMonth() &&
-            lessonDate.getFullYear() === now.getFullYear());
+            lessonDate.getFullYear() === now.getFullYear()) ||
+          (periodFilter === 'last_month' &&
+            lessonDate.getMonth() === lastMonthDate.getMonth() &&
+            lessonDate.getFullYear() === lastMonthDate.getFullYear()) ||
+          (periodFilter === 'custom_month' &&
+            lessonDate.getMonth() === customMonthIndex - 1 &&
+            lessonDate.getFullYear() === customYear) ||
+          (periodFilter === 'quarter' && lessonDate >= quarterStart && lessonDate <= quarterEnd) ||
+          (periodFilter === 'semester' && lessonDate >= semesterStart && lessonDate <= semesterEnd) ||
+          (periodFilter === 'year' && lessonDate.getFullYear() === now.getFullYear());
 
         const statusMatch = statusFilter === 'all' || lesson.status === statusFilter;
-        const originMatch = originFilter === 'all' || lesson.origin === originFilter;
 
-        return periodMatch && statusMatch && originMatch;
+        const normalizedOrigin = normalizeText(lesson.origin);
+        const categoryMatch =
+          categoryFilter === 'all' ||
+          (categoryFilter === 'school' && normalizedOrigin.includes('escola')) ||
+          (categoryFilter === 'private' && normalizedOrigin.includes('particular'));
+
+        const originMatch = originFilter === 'all' || lesson.origin === originFilter;
+        const studentMatch = studentFilter === 'all' || lesson.studentId === studentFilter;
+
+        return periodMatch && statusMatch && categoryMatch && originMatch && studentMatch;
       })
       .sort((firstLesson, secondLesson) => {
         const firstDate = firstLesson.date?.toDate?.()?.getTime() || 0;
         const secondDate = secondLesson.date?.toDate?.()?.getTime() || 0;
         return secondDate - firstDate;
       });
-  }, [lessons, originFilter, periodFilter, statusFilter, studentsById]);
+  }, [categoryFilter, customMonth, lessons, originFilter, periodFilter, statusFilter, studentFilter, studentsById]);
 
   const totals = useMemo(() => {
     return filteredLessons.reduce(
       (accumulator, lesson) => {
         const value = Number(lesson.rateApplied) || 0;
         if (lesson.status === 'paid') accumulator.paid += value;
-        if (lesson.status === 'pending') accumulator.pending += value;
+        if (isReceivableStatus(lesson.status)) accumulator.pending += value;
         if (lesson.status === 'scheduled') accumulator.scheduled += value;
         return accumulator;
       },
@@ -157,18 +214,43 @@ const Finance = () => {
           <span>Período</span>
           <select value={periodFilter} onChange={(event) => setPeriodFilter(event.target.value)}>
             <option value="today">Hoje</option>
+            <option value="week">Semana atual</option>
             <option value="month">Mês atual</option>
+            <option value="last_month">Mês anterior</option>
+            <option value="custom_month">Mês específico</option>
+            <option value="quarter">Trimestre atual</option>
+            <option value="semester">Semestre atual</option>
+            <option value="year">Ano atual</option>
             <option value="all">Todo período</option>
           </select>
+          {periodFilter === 'custom_month' && (
+            <input
+              type="month"
+              value={customMonth}
+              onChange={(event) => setCustomMonth(event.target.value)}
+              className="finance-page__month-picker"
+            />
+          )}
         </label>
 
         <label>
           <span>Status</span>
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="all">Todos</option>
-            <option value="scheduled">Agendada</option>
-            <option value="pending">Pendente</option>
-            <option value="paid">Paga</option>
+            {LESSON_STATUS_OPTIONS.map((statusOption) => (
+              <option key={statusOption.value} value={statusOption.value}>
+                {statusOption.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <span>Categoria</span>
+          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+            <option value="all">Todas</option>
+            <option value="school">Escola</option>
+            <option value="private">Particular</option>
           </select>
         </label>
 
@@ -178,6 +260,17 @@ const Finance = () => {
             {availableOrigins.map((origin) => (
               <option key={origin} value={origin}>
                 {origin === 'all' ? 'Todas as origens' : origin}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <span>Aluno</span>
+          <select value={studentFilter} onChange={(event) => setStudentFilter(event.target.value)}>
+            {availableStudents.map((student) => (
+              <option key={student.id} value={student.id}>
+                {student.name}
               </option>
             ))}
           </select>
@@ -230,9 +323,11 @@ const Finance = () => {
                         value={lesson.status}
                         onChange={(event) => handleStatusChange(lesson.id, event.target.value)}
                       >
-                        <option value="scheduled">Agendada</option>
-                        <option value="pending">Pendente</option>
-                        <option value="paid">Paga</option>
+                        {LESSON_STATUS_OPTIONS.map((statusOption) => (
+                          <option key={statusOption.value} value={statusOption.value}>
+                            {statusOption.label}
+                          </option>
+                        ))}
                       </select>
                     </td>
                     <td>{formatCurrency(lesson.rateApplied)}</td>
@@ -267,14 +362,17 @@ const Finance = () => {
                       value={lesson.status}
                       onChange={(event) => handleStatusChange(lesson.id, event.target.value)}
                     >
-                      <option value="scheduled">{statusLabel.scheduled}</option>
-                      <option value="pending">{statusLabel.pending}</option>
-                      <option value="paid">{statusLabel.paid}</option>
+                      {LESSON_STATUS_OPTIONS.map((statusOption) => (
+                        <option key={statusOption.value} value={statusOption.value}>
+                          {statusOption.label}
+                        </option>
+                      ))}
                     </select>
                     <button type="button" onClick={() => openEditLesson(lesson)}>
                       Editar
                     </button>
                   </div>
+                  <p>Status: {getLessonStatusLabel(lesson.status)}</p>
                 </article>
               ))}
             </div>
