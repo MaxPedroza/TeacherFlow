@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { LESSON_STATUS_OPTIONS } from '../../constants/lessonStatus.js';
+import HelpTooltip from '../HelpTooltip/HelpTooltip.jsx';
 import './LessonForm.scss';
 
 const toInputDateTime = (dateValue) => {
@@ -156,7 +157,10 @@ const LessonForm = ({ lesson, students, initialDate, onClose, onSave }) => {
             </div>
 
             <div className="form-group">
-              <label>Status</label>
+              <label>
+                Status
+                <HelpTooltip text="Agendada: futura. Pendente: realizada, aguardando pagamento. Paga: concluída. Falta avisada: aluno avisou (sem cobrança). Falta sem aviso: cobrar mesmo assim." />
+              </label>
               <select
                 value={formData.status}
                 onChange={(event) => setField('status', event.target.value)}
@@ -172,7 +176,10 @@ const LessonForm = ({ lesson, students, initialDate, onClose, onSave }) => {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Tipo</label>
+              <label>
+                Tipo
+                <HelpTooltip text="Normal: aula regular com cobrança. Demonstrativa: aula gratuita de avaliação (30 min, R$ 0,00)." />
+              </label>
               <select value={formData.type} onChange={(event) => handleTypeChange(event.target.value)}>
                 <option value="Normal">Normal</option>
                 <option value="Demonstrativa">Demonstrativa</option>
@@ -194,7 +201,10 @@ const LessonForm = ({ lesson, students, initialDate, onClose, onSave }) => {
           </div>
 
           <div className="form-group">
-            <label>Valor aplicado (R$)</label>
+            <label>
+              Valor aplicado (R$)
+              <HelpTooltip text="Pode diferir do valor padrão do aluno. Ex: aula mais curta ou desconto pontual." />
+            </label>
             <input
               type="number"
               min="0"
@@ -224,7 +234,10 @@ const LessonForm = ({ lesson, students, initialDate, onClose, onSave }) => {
                   checked={repeatWeekly}
                   onChange={(event) => setRepeatWeekly(event.target.checked)}
                 />
-                <span>Repetir semanalmente</span>
+                <span>
+                  Repetir semanalmente
+                  <HelpTooltip text="Cria automaticamente várias aulas com o mesmo horário, uma vez por semana, pelo número de semanas escolhido." />
+                </span>
               </label>
 
               {repeatWeekly ? (

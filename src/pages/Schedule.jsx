@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Calendar, List, Calendar as CalendarWeek, PencilLine, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, Calendar, List, Calendar as CalendarWeek, PencilLine, Plus, Trash2, X, UserPlus } from 'lucide-react';
 import LessonForm from '../components/LessonForm/LessonForm.jsx';
+import ConfirmDialog from '../components/ConfirmDialog/ConfirmDialog.jsx';
+import PageSpinner from '../components/PageSpinner/PageSpinner.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import { useLessons } from '../hooks/useLessons.js';
 import { useStudents } from '../hooks/useStudents.js';
 import { getLessonStatusLabel } from '../constants/lessonStatus.js';
@@ -17,7 +20,9 @@ const Schedule = () => {
   const [isLessonFormOpen, setIsLessonFormOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedLesson, setSelectedLesson] = useState(null);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [confirmLesson, setConfirmLesson] = useState(null);
+  const [dayDetailDate, setDayDetailDate] = useState(null);
+  const { addToast } = useToast();
   const { lessons, loading: lessonsLoading, createLesson, updateLesson, deleteLesson } = useLessons();
   const { students, loading: studentsLoading } = useStudents();
 
@@ -117,6 +122,21 @@ const Schedule = () => {
     );
   };
 
+  const openDayDetail = (day) => {
+    if (!day) return;
+    const lessonsOfDay = getLessonsForDay(day);
+    if (lessonsOfDay.length > 0) {
+      // Tem aulas: abre modal de detalhes do dia
+      setDayDetailDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+    } else {
+      // Sem aulas: abre formulário direto (se houver aluno)
+      if (!activeStudents.length) return;
+      setSelectedLesson(null);
+      setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day, 9, 0, 0));
+      setIsLessonFormOpen(true);
+    }
+  };
+
   const openCreateLessonForDay = (day) => {
     if (!day || !activeStudents.length) return;
 
@@ -128,28 +148,29 @@ const Schedule = () => {
   const openEditLesson = (lesson) => {
     setSelectedLesson(lesson);
     setSelectedDate(null);
-    setFeedbackMessage('');
     setIsLessonFormOpen(true);
   };
 
-  const handleDeleteLesson = async (lesson) => {
-    const studentName = studentsById.get(lesson.studentId)?.name || 'este aluno';
-    const confirmed = window.confirm(`Excluir a aula de ${studentName}?`);
+  const handleDeleteLesson = (lesson) => {
+    setConfirmLesson(lesson);
+  };
 
-    if (!confirmed) return;
-
+  const confirmDeleteLesson = async () => {
+    if (!confirmLesson) return;
+    const lesson = confirmLesson;
+    setConfirmLesson(null);
     try {
       await deleteLesson(lesson.id);
-      setFeedbackMessage('Aula excluída com sucesso.');
+      addToast('Aula excluída com sucesso.');
     } catch (error) {
       console.error('Erro ao excluir aula:', error);
-      setFeedbackMessage('Não foi possível excluir a aula agora.');
+      addToast('Não foi possível excluir a aula agora.', 'error');
     }
   };
 
   const isBusy = lessonsLoading || studentsLoading;
 
-  if (isBusy) return <div className="container">Carregando agenda...</div>;
+  if (isBusy) return <PageSpinner message="Carregando agenda..." />;
 
   const monthName = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
@@ -175,7 +196,12 @@ const Schedule = () => {
         </button>
       </header>
 
-      {feedbackMessage ? <p className="schedule__feedback">{feedbackMessage}</p> : null}
+      {!studentsLoading && students.length === 0 && (
+        <div className="schedule__no-students">
+          <UserPlus size={18} />
+          <span>Nenhum aluno cadastrado. <a href="/alunos">Cadastre um aluno</a> para começar a agendar aulas.</span>
+        </div>
+      )}
 
       <section className="schedule__controls panel">
         <div className="schedule__view-switcher">
@@ -277,8 +303,8 @@ const Schedule = () => {
                     className={`schedule__day ${lessonsOfDay.length > 0 ? 'schedule__day--has-lessons' : ''} ${
                       isTodayCell(day) ? 'schedule__day--today' : ''
                     }`}
-                    onClick={() => openCreateLessonForDay(day)}
-                    title="Clique para cadastrar uma aula neste dia"
+                    onClick={() => openDayDetail(day)}
+                    title={getLessonsForDay(day).length > 0 ? 'Ver aulas do dia' : 'Clique para cadastrar uma aula neste dia'}
                   >
                     <div className="schedule__day-number">{day}</div>
                     <div className="schedule__day-lessons">
@@ -345,6 +371,12 @@ const Schedule = () => {
                     <div className="schedule__week-info">
                       <strong>{student?.name || 'Aluno'}</strong>
                       <p>{student?.instrument || 'Instrumento não informado'} • {student?.origin} • {lesson.duration} min • {formatCurrency(lesson.rateApplied)}</p>
+                      {lesson.content ? (
+                        <p className="schedule__week-content">
+                          <BookOpen size={11} />
+                          {lesson.content}
+                        </p>
+                      ) : null}
                     </div>
 
                     <div className="schedule__item-side">
@@ -445,6 +477,99 @@ const Schedule = () => {
         </section>
       )}
 
+      {dayDetailDate && (
+        <div className="schedule__day-modal-overlay" onClick={() => setDayDetailDate(null)}>
+          <div className="schedule__day-modal" onClick={(e) => e.stopPropagation()}>
+            <header className="schedule__day-modal-header">
+              <h3>
+                {dayDetailDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </h3>
+              <button
+                type="button"
+                className="schedule__day-modal-close"
+                onClick={() => setDayDetailDate(null)}
+                aria-label="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </header>
+
+            <div className="schedule__day-modal-lessons">
+              {getLessonsForDay(dayDetailDate.getDate()).map((lesson) => {
+                const student = studentsById.get(lesson.studentId);
+                const lessonDate = lesson.date?.toDate?.();
+                const time = lessonDate?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || '--:--';
+                return (
+                  <div key={lesson.id} className="schedule__day-modal-card">
+                    <div className="schedule__day-modal-card-top">
+                      <span className={`schedule__lesson-dot schedule__lesson-dot--${lesson.status}`} />
+                      <strong>{student?.name || 'Aluno'}</strong>
+                      <span className="schedule__day-modal-time">{time}</span>
+                      <span className={`schedule__status schedule__status--${lesson.status}`}>
+                        {getLessonStatusLabel(lesson.status)}
+                      </span>
+                    </div>
+                    <div className="schedule__day-modal-card-info">
+                      <span>{student?.instrument || 'Instrumento não informado'}</span>
+                      <span>{lesson.duration} min</span>
+                      <span>{formatCurrency(lesson.rateApplied)}</span>
+                    </div>
+                    {lesson.content ? (
+                      <p className="schedule__day-modal-card-content">{lesson.content}</p>
+                    ) : null}
+                    <div className="schedule__day-modal-card-actions">
+                      <button
+                        type="button"
+                        className="schedule__action-btn"
+                        onClick={() => {
+                          setDayDetailDate(null);
+                          openEditLesson(lesson);
+                        }}
+                      >
+                        <PencilLine size={13} />
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="schedule__action-btn schedule__action-btn--danger"
+                        onClick={() => {
+                          setDayDetailDate(null);
+                          handleDeleteLesson(lesson);
+                        }}
+                      >
+                        <Trash2 size={13} />
+                        <span>Excluir</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {activeStudents.length > 0 && (
+              <button
+                type="button"
+                className="schedule__day-modal-add"
+                onClick={() => {
+                  setDayDetailDate(null);
+                  setSelectedLesson(null);
+                  setSelectedDate(new Date(
+                    dayDetailDate.getFullYear(),
+                    dayDetailDate.getMonth(),
+                    dayDetailDate.getDate(),
+                    9, 0, 0
+                  ));
+                  setIsLessonFormOpen(true);
+                }}
+              >
+                <Plus size={16} />
+                <span>Nova aula neste dia</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {isLessonFormOpen ? (
         <LessonForm
           lesson={selectedLesson}
@@ -458,12 +583,23 @@ const Schedule = () => {
           onSave={async (payload) => {
             if (selectedLesson) {
               await updateLesson(selectedLesson.id, payload);
-              setFeedbackMessage('Aula atualizada com sucesso.');
+              addToast('Aula atualizada com sucesso.');
             } else {
               await createLesson(payload);
-              setFeedbackMessage('Aula cadastrada com sucesso.');
+              addToast('Aula cadastrada com sucesso.');
             }
           }}
+        />
+      ) : null}
+
+      {confirmLesson ? (
+        <ConfirmDialog
+          title="Excluir aula?"
+          message={`A aula de ${studentsById.get(confirmLesson.studentId)?.name || 'este aluno'} será removida permanentemente.`}
+          confirmLabel="Excluir"
+          danger
+          onConfirm={confirmDeleteLesson}
+          onCancel={() => setConfirmLesson(null)}
         />
       ) : null}
     </main>

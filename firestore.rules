@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Nega tudo por padrão — apenas as regras explícitas abaixo concedem acesso
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Alunos: apenas o professor dono pode ler e escrever
+    match /students/{studentId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == resource.data.teacherId;
+
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.teacherId;
+    }
+
+    // Aulas: apenas o professor dono pode ler e escrever
+    match /lessons/{lessonId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == resource.data.teacherId;
+
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.teacherId;
+    }
+
+    // Usuários: cada professor pode ler apenas seu próprio documento de plano
+    // Escrita apenas via Cloud Function (service account não passa pela regra)
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false; // escrita exclusiva via Cloud Function (admin SDK)
+    }
+
+    // Uso diário de IA: leitura e escrita do próprio usuário
+    match /aiUsage/{uid}/daily/{date} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

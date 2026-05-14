@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, Users, BadgeDollarSign, Settings } from 'lucide-react';
+import { Crown, LayoutDashboard, Calendar, Users, BadgeDollarSign, Settings } from 'lucide-react';
 import './BottomNav.scss';
 
 const BottomNav = () => {
@@ -29,6 +29,12 @@ const BottomNav = () => {
       }>
         <BadgeDollarSign size={20} />
         <label>Financeiro</label>
+      </NavLink>
+      <NavLink to="/planos" className={({ isActive }) => 
+        `bottom-nav__link ${isActive ? 'bottom-nav__link--active' : ''}`
+      }>
+        <Crown size={20} />
+        <label>Planos</label>
       </NavLink>
       <NavLink to="/configuracoes" className={({ isActive }) => 
         `bottom-nav__link ${isActive ? 'bottom-nav__link--active' : ''}`

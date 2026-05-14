@@ -180,10 +180,18 @@ export const useLessons = () => {
   }, [recalculateStudentLastLessonDate]);
 
   const updateLessonStatus = useCallback(async (lessonId, status) => {
-    await updateDoc(doc(db, 'lessons', lessonId), {
+    if (!lessonId) throw new Error('Lesson id inválido.');
+
+    const lessonRef = doc(db, 'lessons', lessonId);
+    const lessonSnapshot = await getDoc(lessonRef);
+    const previousStatus = normalizeLessonStatus(lessonSnapshot.data()?.status || 'scheduled');
+
+    await updateDoc(lessonRef, {
       status,
       updatedAt: serverTimestamp(),
     });
+
+    return previousStatus;
   }, []);
 
   return {

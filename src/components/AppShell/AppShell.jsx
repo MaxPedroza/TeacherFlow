@@ -4,6 +4,7 @@ import {
   Bell,
   Sun,
   Moon,
+  Crown,
   LayoutDashboard,
   Calendar,
   Users,
@@ -14,6 +15,7 @@ import {
 import BottomNav from '../BottomNav/BottomNav.jsx';
 import AIAssistant from '../AIAssistant/AIAssistant.jsx';
 import { useAuthContext } from '../../context/AuthContext.jsx';
+import { useToast } from '../../context/ToastContext.jsx';
 import { useLessons } from '../../hooks/useLessons.js';
 import { useStudents } from '../../hooks/useStudents.js';
 import './AppShell.scss';
@@ -37,12 +39,14 @@ const navigationItems = [
   { to: '/agenda', label: 'Agenda', icon: Calendar },
   { to: '/alunos', label: 'Alunos', icon: Users },
   { to: '/financeiro', label: 'Financeiro', icon: BadgeDollarSign },
+  { to: '/planos', label: 'Planos', icon: Crown },
   { to: '/configuracoes', label: 'Configurações', icon: Settings },
 ];
 
 const AppShell = ({ children }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
+  const { addToast } = useToast();
   const { lessons, loading: lessonsLoading, createLesson, updateLessonStatus } = useLessons();
   const { students, loading: studentsLoading } = useStudents();
   const [theme, setTheme] = useState(() => localStorage.getItem(STORAGE_KEY) || 'dark');
@@ -117,8 +121,20 @@ const AppShell = ({ children }) => {
 
   const handleMarkAsPaid = async (lessonId) => {
     try {
-      await updateLessonStatus(lessonId, 'paid');
+      const previousStatus = await updateLessonStatus(lessonId, 'paid');
       setNotificationFeedback('Aula marcada como paga.');
+      addToast('Aula marcada como paga.', 'success', 6000, {
+        label: 'Desfazer',
+        onClick: async () => {
+          try {
+            await updateLessonStatus(lessonId, previousStatus);
+            addToast('Alteração desfeita.', 'info');
+          } catch (undoError) {
+            console.error('Erro ao desfazer pagamento:', undoError);
+            addToast('Não foi possível desfazer a alteração agora.', 'error');
+          }
+        },
+      });
     } catch (error) {
       console.error('Erro ao atualizar aula pendente:', error);
       setNotificationFeedback('Não foi possível atualizar o pagamento agora.');

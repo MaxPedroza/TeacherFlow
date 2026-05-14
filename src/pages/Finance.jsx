@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { PencilLine, Plus } from 'lucide-react';
+import { PencilLine, Plus, UserPlus } from 'lucide-react';
 import LessonForm from '../components/LessonForm/LessonForm.jsx';
+import PageSpinner from '../components/PageSpinner/PageSpinner.jsx';
 import { useLessons } from '../hooks/useLessons.js';
 import { useStudents } from '../hooks/useStudents.js';
+import { useToast } from '../context/ToastContext.jsx';
 import {
   LESSON_STATUS_OPTIONS,
   getLessonStatusLabel,
@@ -44,7 +46,8 @@ const Finance = () => {
   const [studentFilter, setStudentFilter] = useState('all');
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [isLessonFormOpen, setIsLessonFormOpen] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [busyLessonId, setBusyLessonId] = useState('');
+  const { addToast } = useToast();
 
   const {
     lessons,
@@ -167,7 +170,7 @@ const Finance = () => {
   }, [filteredLessons]);
 
   if (lessonsLoading || studentsLoading) {
-    return <div className="container">Carregando financeiro...</div>;
+    return <PageSpinner message="Carregando financeiro..." />;
   }
 
   const openCreateLesson = () => {
@@ -181,12 +184,31 @@ const Finance = () => {
   };
 
   const handleStatusChange = async (lessonId, nextStatus) => {
+    setBusyLessonId(lessonId);
     try {
-      await updateLessonStatus(lessonId, nextStatus);
-      setFeedbackMessage('Status da aula atualizado.');
+      const previousStatus = await updateLessonStatus(lessonId, nextStatus);
+      addToast(
+        'Status da aula atualizado.',
+        'success',
+        6000,
+        {
+          label: 'Desfazer',
+          onClick: async () => {
+            try {
+              await updateLessonStatus(lessonId, previousStatus);
+              addToast('Alteração desfeita.', 'info');
+            } catch (undoError) {
+              console.error('Erro ao desfazer status:', undoError);
+              addToast('Não foi possível desfazer a alteração agora.', 'error');
+            }
+          },
+        }
+      );
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
-      setFeedbackMessage('Não foi possível atualizar o status agora.');
+      addToast('Não foi possível atualizar o status agora.', 'error');
+    } finally {
+      setBusyLessonId('');
     }
   };
 
@@ -208,6 +230,13 @@ const Finance = () => {
           <span>Nova Aula</span>
         </button>
       </header>
+
+      {!studentsLoading && students.length === 0 && (
+        <div className="finance-page__no-students">
+          <UserPlus size={18} />
+          <span>Nenhum aluno cadastrado. <a href="/alunos">Cadastre um aluno</a> para começar a registrar aulas.</span>
+        </div>
+      )}
 
       <section className="finance-page__filters panel">
         <label>
@@ -292,8 +321,6 @@ const Finance = () => {
         </article>
       </section>
 
-      {feedbackMessage ? <p className="finance-page__feedback">{feedbackMessage}</p> : null}
-
       <section className="finance-page__table-wrap panel">
         {filteredLessons.length === 0 ? (
           <p className="finance-page__empty">Nenhuma aula encontrada para os filtros selecionados.</p>
@@ -322,6 +349,7 @@ const Finance = () => {
                       <select
                         value={lesson.status}
                         onChange={(event) => handleStatusChange(lesson.id, event.target.value)}
+                        disabled={busyLessonId === lesson.id}
                       >
                         {LESSON_STATUS_OPTIONS.map((statusOption) => (
                           <option key={statusOption.value} value={statusOption.value}>
@@ -361,6 +389,7 @@ const Finance = () => {
                     <select
                       value={lesson.status}
                       onChange={(event) => handleStatusChange(lesson.id, event.target.value)}
+                      disabled={busyLessonId === lesson.id}
                     >
                       {LESSON_STATUS_OPTIONS.map((statusOption) => (
                         <option key={statusOption.value} value={statusOption.value}>
@@ -388,10 +417,10 @@ const Finance = () => {
           onSave={async (payload) => {
             if (selectedLesson) {
               await updateLesson(selectedLesson.id, payload);
-              setFeedbackMessage('Aula atualizada com sucesso.');
+              addToast('Aula atualizada com sucesso.');
             } else {
               await createLesson(payload);
-              setFeedbackMessage('Aula cadastrada com sucesso.');
+              addToast('Aula cadastrada com sucesso.');
             }
           }}
         />

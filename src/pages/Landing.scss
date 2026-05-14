@@ -1,0 +1,373 @@
+@use '../styles/variables' as *;
+
+// ── Tokens locais ─────────────────────────────────────────────────────────────
+$indigo: #6366F1;
+$indigo-dark: #4F46E5;
+$indigo-light: rgba(99, 102, 241, 0.12);
+$text-primary: #F1F5F9;
+$text-secondary: #94A3B8;
+$surface: #1E293B;
+$surface-elevated: #243247;
+$bg: #0F172A;
+$border: rgba(148, 163, 184, 0.15);
+
+// ── Reset / base ──────────────────────────────────────────────────────────────
+.landing {
+  background: $bg;
+  color: $text-primary;
+  font-family: inherit;
+  min-height: 100vh;
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  // ── Utilitários ──────────────────────────────────────────────────────────
+  &__container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+  }
+
+  &__section-title {
+    text-align: center;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+    margin: 0 0 2.5rem;
+    color: $text-primary;
+  }
+
+  // ── Botões ────────────────────────────────────────────────────────────────
+  &__btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: $indigo;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.12s;
+    text-decoration: none;
+
+    &:hover {
+      background: $indigo-dark;
+      transform: translateY(-1px);
+    }
+  }
+
+  &__btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    color: $text-secondary;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 0.15s;
+    text-decoration: none;
+
+    &:hover { color: $text-primary; }
+  }
+
+  &__btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: transparent;
+    color: $text-primary;
+    border: 1.5px solid $border;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: border-color 0.15s, color 0.15s;
+
+    &:hover {
+      border-color: rgba(148, 163, 184, 0.4);
+      color: $text-primary;
+    }
+  }
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  &__header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid $border;
+  }
+
+  &__header-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__logo {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: $indigo;
+    letter-spacing: -0.02em;
+  }
+
+  // ── Hero ──────────────────────────────────────────────────────────────────
+  &__hero {
+    padding: 5rem 1.25rem 4rem;
+    text-align: center;
+  }
+
+  &__hero-inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  &__badge {
+    display: inline-block;
+    background: $indigo-light;
+    color: $indigo;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 999px;
+    padding: 0.3rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5rem;
+  }
+
+  &__headline {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin: 0 0 1.25rem;
+    color: $text-primary;
+  }
+
+  &__subheadline {
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    color: $text-secondary;
+    line-height: 1.6;
+    margin: 0 0 2rem;
+  }
+
+  &__hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  &__hero-note {
+    font-size: 0.82rem;
+    color: $text-secondary;
+    margin: 0;
+  }
+
+  // ── Features ─────────────────────────────────────────────────────────────
+  &__features {
+    padding: 4rem 0;
+    border-top: 1px solid $border;
+  }
+
+  &__features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  &__feature-card {
+    background: $surface;
+    border: 1px solid $border;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.2s, transform 0.18s;
+
+    &:hover {
+      border-color: rgba(99, 102, 241, 0.35);
+      transform: translateY(-2px);
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0.75rem 0 0.4rem;
+      color: $text-primary;
+    }
+
+    p {
+      font-size: 0.9rem;
+      color: $text-secondary;
+      line-height: 1.55;
+      margin: 0;
+    }
+  }
+
+  &__feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: $indigo-light;
+    border-radius: 10px;
+    color: $indigo;
+  }
+
+  // ── Social proof ─────────────────────────────────────────────────────────
+  &__proof {
+    padding: 3.5rem 1.25rem;
+    text-align: center;
+    border-top: 1px solid $border;
+  }
+
+  &__quote {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    color: $text-primary;
+    font-style: italic;
+    line-height: 1.6;
+    max-width: 640px;
+    margin: 0 auto 1rem;
+
+    &::before { content: '"'; }
+    &::after  { content: '"'; }
+  }
+
+  &__cite {
+    font-size: 0.85rem;
+    color: $text-secondary;
+  }
+
+  // ── Pricing ──────────────────────────────────────────────────────────────
+  &__pricing {
+    padding: 4rem 0;
+    border-top: 1px solid $border;
+  }
+
+  &__pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  &__plan {
+    position: relative;
+    background: $surface;
+    border: 1.5px solid $border;
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    &--pro {
+      border-color: $indigo;
+      background: linear-gradient(160deg, rgba(99,102,241,0.08) 0%, $surface 60%);
+    }
+  }
+
+  &__plan-badge {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: $indigo;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.9rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  &__plan-header {
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+    }
+  }
+
+  &__plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+  }
+
+  &__plan-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    color: $text-primary;
+  }
+
+  &__plan-period {
+    font-size: 0.85rem;
+    color: $text-secondary;
+  }
+
+  &__plan-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    flex: 1;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: $text-secondary;
+
+      svg { color: #22C55E; flex-shrink: 0; }
+    }
+  }
+
+  // ── CTA final ────────────────────────────────────────────────────────────
+  &__cta {
+    padding: 4rem 1.25rem;
+    text-align: center;
+    border-top: 1px solid $border;
+
+    h2 {
+      font-size: clamp(1.3rem, 3vw, 1.8rem);
+      font-weight: 700;
+      margin: 0 0 0.75rem;
+    }
+
+    p {
+      color: $text-secondary;
+      margin: 0 0 2rem;
+    }
+  }
+
+  // ── Footer ───────────────────────────────────────────────────────────────
+  &__footer {
+    border-top: 1px solid $border;
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+
+    p {
+      font-size: 0.8rem;
+      color: $text-secondary;
+      margin: 0;
+    }
+  }
+}

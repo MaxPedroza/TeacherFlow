@@ -4,6 +4,7 @@ import { collection, addDoc, doc, serverTimestamp, updateDoc } from 'firebase/fi
 import { useAuthContext } from '../context/AuthContext.jsx';
 import { X } from 'lucide-react';
 import { INSTRUMENT_OPTIONS } from '../constants/instruments.js';
+import HelpTooltip from '../components/HelpTooltip/HelpTooltip.jsx';
 import './StudentForm.scss';
 
 const OTHER_INSTRUMENT_OPTION = '__other__';
@@ -185,7 +186,10 @@ const StudentForm = ({ onClose, student, onSuccess }) => {
           </div>
 
           <div className="form-group">
-            <label>Origem (Escola ou Particular)</label>
+            <label>
+              Origem (Escola ou Particular)
+              <HelpTooltip text="Use 'Particular' para aulas independentes. Para escolas, escreva o nome exato (ex: Escola de Música ABC) — será usado nos filtros financeiros." />
+            </label>
             <input 
               type="text" 
               required 
@@ -197,7 +201,10 @@ const StudentForm = ({ onClose, student, onSuccess }) => {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Valor/Aula (R$)</label>
+              <label>
+                Valor/Aula (R$)
+                <HelpTooltip text="Valor padrão cobrado por aula. Pode ser ajustado individualmente em cada registro de aula." />
+              </label>
               <input 
                 type="number" 
                 required 
@@ -228,7 +235,10 @@ const StudentForm = ({ onClose, student, onSuccess }) => {
               checked={formData.isEffective}
               onChange={(e) => updateField('isEffective', e.target.checked)}
             />
-            <span>Aluno efetivado</span>
+            <span>
+              Aluno efetivado
+              <HelpTooltip text="Aluno efetivado é um aluno regular. Desmarque para alunos em fase demonstrativa (ainda avaliando se continuarão)." />
+            </span>
           </label>
 
           <div className="student-form__actions">

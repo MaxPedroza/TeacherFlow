@@ -333,6 +333,25 @@
     }
   }
 
+  &__week-content {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: rgba($text-muted, 0.75);
+    margin: 0;
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    svg {
+      flex-shrink: 0;
+      position: relative;
+      top: 1px;
+    }
+  }
+
   &__list {
     padding: 1.5rem;
 
@@ -481,6 +500,179 @@
     color: $text-muted;
     padding: 2rem 1rem;
   }
+
+  // Banner sem alunos cadastrados
+  &__no-students {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    margin-bottom: 1.25rem;
+    background-color: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: 0.75rem;
+    color: #fbbf24;
+    font-size: 0.9rem;
+
+    svg { flex-shrink: 0; }
+
+    a {
+      color: #fbbf24;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // Modal de detalhes do dia
+  &__day-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  &__day-modal {
+    background-color: var(--color-surface, #1e2a3b);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__day-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      text-transform: capitalize;
+      color: $text;
+    }
+  }
+
+  &__day-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    background-color: transparent;
+    color: $text-muted;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #f87171;
+      color: #fecaca;
+    }
+  }
+
+  &__day-modal-lessons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__day-modal-card {
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    background-color: rgba(15, 23, 42, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__day-modal-card-top {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+
+    strong {
+      color: $text;
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__day-modal-time {
+    font-size: 0.875rem;
+    color: $text-muted;
+    font-weight: 600;
+  }
+
+  &__day-modal-card-info {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: $text-muted;
+
+    span::after {
+      content: '·';
+      margin-left: 1rem;
+    }
+
+    span:last-child::after {
+      content: '';
+      margin: 0;
+    }
+  }
+
+  &__day-modal-card-content {
+    font-size: 0.82rem;
+    color: $text-muted;
+    margin: 0;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  &__day-modal-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+  }
+
+  &__day-modal-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px dashed var(--color-border);
+    border-radius: 0.75rem;
+    background-color: transparent;
+    color: $text-muted;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    margin-top: 0.25rem;
+
+    &:hover {
+      border-color: $scheduled;
+      color: $scheduled;
+      background-color: rgba(59, 130, 246, 0.06);
+    }
+  }
 }
 
 :root[data-theme='light'] {
@@ -496,6 +688,18 @@
     &__list-item {
       background-color: rgba(255, 255, 255, 0.88);
       border-color: rgba(63, 79, 104, 0.24);
+    }
+
+    &__no-students {
+      background-color: rgba(251, 191, 36, 0.07);
+    }
+
+    &__day-modal {
+      background-color: #f1f5f9;
+    }
+
+    &__day-modal-card {
+      background-color: #ffffff;
     }
 
     &__day--empty {

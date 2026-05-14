@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Bot, X, Send, CheckCircle, XCircle, Loader2, Trash2 } from 'lucide-react';
+import { Bot, Crown, X, Send, CheckCircle, XCircle, Loader2, Trash2 } from 'lucide-react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase.js';
 import { useAuthContext } from '../../context/AuthContext.jsx';
+import { useToast } from '../../context/ToastContext.jsx';
 import { useBilling } from '../../hooks/useBilling.js';
+import usePlan from '../../hooks/usePlan.js';
 import { sendAIMessage } from '../../services/aiService.js';
+import { markAIOpened } from '../OnboardingChecklist/OnboardingChecklist.jsx';
 import './AIAssistant.scss';
 
 const WELCOME_MESSAGE = {
@@ -17,7 +20,9 @@ const MAX_MESSAGES = 30;
 
 const AIAssistant = ({ students = [], lessons = [], createLesson, updateLessonStatus }) => {
   const { user } = useAuthContext();
+  const { addToast } = useToast();
   const { billing } = useBilling();
+  const { isPro } = usePlan();
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
@@ -184,11 +189,24 @@ const AIAssistant = ({ students = [], lessons = [], createLesson, updateLessonSt
         const { lessonId, newStatus, lessonDescription } = action.payload;
         if (!lessonId) throw new Error('ID da aula não informado.');
 
-        await updateLessonStatus(lessonId, newStatus);
+        const previousStatus = await updateLessonStatus(lessonId, newStatus);
 
         addMessage({
           role: 'assistant',
           text: `✅ Status da aula "${lessonDescription || lessonId}" atualizado com sucesso!`,
+        });
+
+        addToast('Status da aula atualizado.', 'success', 6000, {
+          label: 'Desfazer',
+          onClick: async () => {
+            try {
+              await updateLessonStatus(lessonId, previousStatus);
+              addToast('Alteração desfeita.', 'info');
+            } catch (undoError) {
+              console.error('Erro ao desfazer atualização da IA:', undoError);
+              addToast('Não foi possível desfazer a alteração agora.', 'error');
+            }
+          },
         });
       } else if (action.intent === 'cancel_lesson') {
         if (!updateLessonStatus) throw new Error('Função de atualizar aula não disponível.');
@@ -196,11 +214,24 @@ const AIAssistant = ({ students = [], lessons = [], createLesson, updateLessonSt
         const { lessonId, lessonDescription } = action.payload;
         if (!lessonId) throw new Error('ID da aula não informado.');
 
-        await updateLessonStatus(lessonId, 'canceled_in_time');
+        const previousStatus = await updateLessonStatus(lessonId, 'canceled_in_time');
 
         addMessage({
           role: 'assistant',
           text: `✅ Aula "${lessonDescription || lessonId}" cancelada com sucesso.`,
+        });
+
+        addToast('Falta avisada registrada.', 'success', 6000, {
+          label: 'Desfazer',
+          onClick: async () => {
+            try {
+              await updateLessonStatus(lessonId, previousStatus);
+              addToast('Alteração desfeita.', 'info');
+            } catch (undoError) {
+              console.error('Erro ao desfazer cancelamento da IA:', undoError);
+              addToast('Não foi possível desfazer a alteração agora.', 'error');
+            }
+          },
         });
       } else {
         throw new Error(`Ação desconhecida: ${action.intent}`);
@@ -249,7 +280,7 @@ const AIAssistant = ({ students = [], lessons = [], createLesson, updateLessonSt
     <>
       <button
         className={`ai-assistant__fab ${isOpen ? 'ai-assistant__fab--open' : ''}`}
-        onClick={() => setIsOpen(prev => !prev)}
+        onClick={() => { setIsOpen(prev => { if (!prev) markAIOpened(); return !prev; }); }}
         aria-label={isOpen ? 'Fechar assistente IA' : 'Abrir assistente IA'}
         title="TeacherAI"
       >
@@ -258,6 +289,17 @@ const AIAssistant = ({ students = [], lessons = [], createLesson, updateLessonSt
 
       {isOpen && (
         <div className="ai-assistant__panel" role="dialog" aria-label="TeacherAI Assistente">
+          {!isPro ? (
+            <div className="ai-assistant__paywall">
+              <Crown size={32} strokeWidth={1.5} />
+              <strong>TeacherAI é exclusivo do plano Pro</strong>
+              <p>Assine por R 39/mês e tenha acesso ao assistente com IA, alunos ilimitados e mais.</p>
+              <a href="/planos" className="btn-primary ai-assistant__paywall-btn">
+                Ver planos
+              </a>
+            </div>
+          ) : (
+          <>
           <div className="ai-assistant__header">
             <div className="ai-assistant__header-info">
               <Bot size={18} />
@@ -354,6 +396,8 @@ const AIAssistant = ({ students = [], lessons = [], createLesson, updateLessonSt
               <Send size={16} />
             </button>
           </div>
+          </>
+          )}
         </div>
       )}
     </>

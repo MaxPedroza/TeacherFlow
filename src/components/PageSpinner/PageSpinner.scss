@@ -1,0 +1,28 @@
+.page-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 30vh;
+  width: 100%;
+
+  &__ring {
+    display: block;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-accent, #6366f1);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+
+  &__label {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

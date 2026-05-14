@@ -1,0 +1,122 @@
+@use '../../styles/variables' as *;
+
+.onboarding-checklist {
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    gap: 1rem;
+
+    h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.15rem;
+    }
+
+    p {
+      font-size: 0.8rem;
+      color: $text-muted;
+    }
+  }
+
+  &__header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: $text-muted;
+    flex-shrink: 0;
+  }
+
+  &__progress {
+    width: 100px;
+    height: 5px;
+    background: var(--color-border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  &__progress-bar {
+    height: 100%;
+    background: var(--status-paid);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  &__steps {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  &__step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+
+    strong {
+      display: block;
+      font-size: 0.9rem;
+
+      a {
+        color: var(--status-scheduled);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+    }
+
+    p {
+      font-size: 0.8rem;
+      color: $text-muted;
+      margin-top: 0.15rem;
+    }
+
+    &--done {
+      opacity: 0.5;
+
+      strong { text-decoration: line-through; }
+    }
+  }
+
+  &__icon {
+    color: $text-muted;
+    flex-shrink: 0;
+    margin-top: 1px;
+
+    &--done { color: var(--status-paid); }
+  }
+
+  &__complete {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.88rem;
+    color: var(--status-paid);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  &__dismiss {
+    display: block;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+    width: 100%;
+    background: none;
+    border: none;
+    color: $text-muted;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-align: center;
+    padding-bottom: 0;
+
+    &:hover { color: $text; }
+  }
+}

@@ -1,11 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { Check, CircleDollarSign, Plus, XCircle } from 'lucide-react';
+import { Check, CircleDollarSign, Plus, UserPlus, XCircle } from 'lucide-react';
+import PageSpinner from '../components/PageSpinner/PageSpinner.jsx';
 import StatCard from '../components/StatCard/StatCard.jsx';
+import ConfirmDialog from '../components/ConfirmDialog/ConfirmDialog.jsx';
 import { useBilling } from '../hooks/useBilling.js';
 import { useLessons } from '../hooks/useLessons.js';
 import { useStudents } from '../hooks/useStudents.js';
 import LessonForm from '../components/LessonForm/LessonForm.jsx';
 import { getLessonStatusLabel } from '../constants/lessonStatus.js';
+import { useToast } from '../context/ToastContext.jsx';
+import OnboardingChecklist from '../components/OnboardingChecklist/OnboardingChecklist.jsx';
 import './Dashboard.scss';
 
 const formatCurrency = (value) =>
@@ -19,8 +23,10 @@ const getCurrentMonthValue = () => {
 
 const Dashboard = () => {
   const [isLessonFormOpen, setIsLessonFormOpen] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
   const [billingPeriod, setBillingPeriod] = useState('month');
+  const [busyLessonId, setBusyLessonId] = useState('');
+  const [rescheduleLesson, setRescheduleLesson] = useState(null);
+  const { addToast } = useToast();
   const [referenceMonth, setReferenceMonth] = useState(getCurrentMonthValue);
   const { pendingTotal, paidTotal, monthlyProjection, periodLabel, loading } = useBilling({
     period: billingPeriod,
@@ -64,21 +70,60 @@ const Dashboard = () => {
 
   const isBusy = loading || lessonsLoading || studentsLoading;
 
-  if (isBusy) return <div className="container">Carregando dados...</div>;
+  if (isBusy) return <PageSpinner message="Carregando dados..." />;
+
+  if (!studentsLoading && !lessonsLoading && students.length === 0 && lessons.length === 0) {
+    return (
+      <main className="container">
+        <div className="dashboard__onboarding panel">
+          <UserPlus size={40} strokeWidth={1.5} />
+          <h1>Bem-vindo ao TeacherFlow!</h1>
+          <p>Você ainda não tem nenhum aluno cadastrado. Comece adicionando seu primeiro aluno para desbloquear todas as funcionalidades.</p>
+          <a href="/alunos" className="btn-primary">Cadastrar primeiro aluno</a>
+        </div>
+      </main>
+    );
+  }
 
   const handleQuickStatus = async (lessonId, status) => {
+    setBusyLessonId(lessonId);
     try {
-      await updateLessonStatus(lessonId, status);
+      const previousStatus = await updateLessonStatus(lessonId, status);
       const statusFeedbackMap = {
         pending: 'Aula marcada como pendente.',
         paid: 'Aula marcada como paga.',
         canceled_in_time: 'Aula marcada como falta avisada (sem cobrança).',
         no_show: 'Aula marcada como falta sem aviso (com cobrança).',
       };
-      setFeedbackMessage(statusFeedbackMap[status] || 'Status da aula atualizado.');
+      addToast(
+        statusFeedbackMap[status] || 'Status da aula atualizado.',
+        'success',
+        6000,
+        {
+          label: 'Desfazer',
+          onClick: async () => {
+            try {
+              await updateLessonStatus(lessonId, previousStatus);
+              if (status === 'canceled_in_time') {
+                setRescheduleLesson(null);
+              }
+              addToast('Alteração desfeita.', 'info');
+            } catch (undoError) {
+              console.error('Erro ao desfazer status da aula:', undoError);
+              addToast('Não foi possível desfazer a alteração agora.', 'error');
+            }
+          },
+        }
+      );
+      if (status === 'canceled_in_time') {
+        const lesson = todaysLessons.find((l) => l.id === lessonId);
+        if (lesson) setRescheduleLesson(lesson);
+      }
     } catch (error) {
       console.error('Erro ao atualizar status da aula:', error);
-      setFeedbackMessage('Não foi possível atualizar o status da aula agora.');
+      addToast('Não foi possível atualizar o status da aula agora.', 'error');
+    } finally {
+      setBusyLessonId('');
     }
   };
 
@@ -99,6 +144,8 @@ const Dashboard = () => {
           <span>Nova Aula</span>
         </button>
       </header>
+
+      <OnboardingChecklist students={students} lessons={lessons} />
 
       <section className="dashboard__filters panel">
         <label>
@@ -138,8 +185,6 @@ const Dashboard = () => {
           type="scheduled" 
         />
       </div>
-
-      {feedbackMessage ? <p className="dashboard__feedback">{feedbackMessage}</p> : null}
 
       <section className="dashboard__today panel">
         <div className="dashboard__today-header">
@@ -182,6 +227,7 @@ const Dashboard = () => {
                         type="button"
                         className="dashboard__action"
                         onClick={() => handleQuickStatus(lesson.id, 'pending')}
+                        disabled={busyLessonId === lesson.id}
                       >
                         <Check size={16} />
                         <span>Check-in</span>
@@ -193,6 +239,7 @@ const Dashboard = () => {
                         type="button"
                         className="dashboard__action"
                         onClick={() => handleQuickStatus(lesson.id, 'paid')}
+                        disabled={busyLessonId === lesson.id}
                       >
                         <CircleDollarSign size={16} />
                         <span>Marcar paga</span>
@@ -204,6 +251,7 @@ const Dashboard = () => {
                         type="button"
                         className="dashboard__action dashboard__action--danger"
                         onClick={() => handleQuickStatus(lesson.id, 'canceled_in_time')}
+                        disabled={busyLessonId === lesson.id}
                       >
                         <XCircle size={16} />
                         <span>Falta avisada</span>
@@ -215,6 +263,7 @@ const Dashboard = () => {
                         type="button"
                         className="dashboard__action dashboard__action--danger"
                         onClick={() => handleQuickStatus(lesson.id, 'no_show')}
+                        disabled={busyLessonId === lesson.id}
                       >
                         <XCircle size={16} />
                         <span>Falta sem aviso</span>
@@ -231,11 +280,24 @@ const Dashboard = () => {
       {isLessonFormOpen ? (
         <LessonForm
           students={activeStudents}
-          onClose={() => setIsLessonFormOpen(false)}
+          lesson={rescheduleLesson ? { studentId: rescheduleLesson.studentId, rateApplied: rescheduleLesson.rateApplied, duration: rescheduleLesson.duration, type: rescheduleLesson.type } : undefined}
+          onClose={() => { setIsLessonFormOpen(false); setRescheduleLesson(null); }}
           onSave={async (payload) => {
             await createLesson(payload);
-            setFeedbackMessage('Aula cadastrada com sucesso.');
+            setRescheduleLesson(null);
+            addToast('Aula reagendada com sucesso.');
           }}
+        />
+      ) : null}
+
+      {rescheduleLesson && !isLessonFormOpen ? (
+        <ConfirmDialog
+          title="Reagendar aula?"
+          message={`O aluno avisou com antecedência. Deseja criar uma nova aula para ${studentsById.get(rescheduleLesson.studentId)?.name || 'este aluno'}?`}
+          confirmLabel="Reagendar"
+          cancelLabel="Não, obrigado"
+          onConfirm={() => setIsLessonFormOpen(true)}
+          onCancel={() => setRescheduleLesson(null)}
         />
       ) : null}
     </main>

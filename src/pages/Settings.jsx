@@ -3,6 +3,8 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 import { collection, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '../services/firebase.js';
 import { useAuthContext } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
+import ConfirmDialog from '../components/ConfirmDialog/ConfirmDialog.jsx';
 import './Settings.scss';
 
 const STORAGE_KEY = 'teacherflow-theme';
@@ -22,10 +24,10 @@ const Settings = () => {
     () => localStorage.getItem(STORAGE_KEY) || document.documentElement.dataset.theme || 'dark'
   );
   const [cleanupLoading, setCleanupLoading] = useState(false);
-  const [cleanupResult, setCleanupResult] = useState('');
+  const [showCleanupConfirm, setShowCleanupConfirm] = useState(false);
   const [inactiveStudents, setInactiveStudents] = useState([]);
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordResult, setPasswordResult] = useState('');
+  const { addToast } = useToast();
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -68,25 +70,24 @@ const Settings = () => {
     };
 
     loadInactiveStudents();
-  }, [user, cleanupResult]);
+  }, [user, cleanupLoading]);
 
   const eligibleCount = useMemo(() => inactiveStudents.length, [inactiveStudents]);
 
   const handleSendPasswordReset = async () => {
     if (!user?.email) {
-      setPasswordResult('Não foi possível identificar o e-mail da conta.');
+      addToast('Não foi possível identificar o e-mail da conta.', 'error');
       return;
     }
 
     setPasswordLoading(true);
-    setPasswordResult('');
 
     try {
       await sendPasswordResetEmail(auth, user.email);
-      setPasswordResult(`Enviamos um link de redefinição para ${user.email}.`);
+      addToast(`Enviamos um link de redefinição para ${user.email}.`);
     } catch (error) {
       console.error('Erro ao enviar redefinição de senha:', error);
-      setPasswordResult('Não foi possível enviar o e-mail de redefinição agora.');
+      addToast('Não foi possível enviar o e-mail de redefinição agora.', 'error');
     } finally {
       setPasswordLoading(false);
     }
@@ -94,17 +95,21 @@ const Settings = () => {
 
   const handleCleanup = async () => {
     if (!inactiveStudents.length) {
-      setCleanupResult('Nenhum aluno inativo elegível para exclusão definitiva.');
+      addToast('Nenhum aluno inativo elegível para exclusão definitiva.', 'info');
       return;
     }
+    setShowCleanupConfirm(true);
+  };
 
+  const confirmCleanup = async () => {
+    setShowCleanupConfirm(false);
     setCleanupLoading(true);
     try {
       await Promise.all(inactiveStudents.map((student) => deleteDoc(doc(db, 'students', student.id))));
-      setCleanupResult(`${inactiveStudents.length} aluno(s) removido(s) definitivamente.`);
+      addToast(`${inactiveStudents.length} aluno(s) removido(s) definitivamente.`);
     } catch (error) {
       console.error('Erro ao limpar alunos inativos:', error);
-      setCleanupResult('Não foi possível concluir a limpeza agora.');
+      addToast('Não foi possível concluir a limpeza agora.', 'error');
     } finally {
       setCleanupLoading(false);
     }
@@ -163,8 +168,6 @@ const Settings = () => {
           >
             {passwordLoading ? 'Enviando link...' : 'Alterar senha por e-mail'}
           </button>
-
-          {passwordResult ? <p className="settings-card__message">{passwordResult}</p> : null}
         </article>
 
         <article className="settings-card">
@@ -185,10 +188,19 @@ const Settings = () => {
           >
             {cleanupLoading ? 'Limpando...' : 'Excluir elegíveis'}
           </button>
-
-          {cleanupResult ? <p className="settings-card__message">{cleanupResult}</p> : null}
         </article>
       </div>
+
+      {showCleanupConfirm ? (
+        <ConfirmDialog
+          title="Excluir alunos inativos?"
+          message={`${eligibleCount} aluno(s) serão removidos permanentemente. Esta ação não pode ser desfeita.`}
+          confirmLabel="Excluir todos"
+          danger
+          onConfirm={confirmCleanup}
+          onCancel={() => setShowCleanupConfirm(false)}
+        />
+      ) : null}
     </section>
   );
 };

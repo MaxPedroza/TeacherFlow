@@ -12,6 +12,9 @@ dist/
 # firebase local cache
 .firebase/
 
+# service account key (nunca commitar!)
+serviceAccount.json
+
 # logs
 npm-debug.log*
 yarn-debug.log*
