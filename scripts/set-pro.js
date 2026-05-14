@@ -2,12 +2,12 @@
  * Script admin: promove um usuário para o plano Pro no Firestore.
  *
  * Uso:
- *   node scripts/set-pro.js <UID> [meses]
+ *   node scripts/set-pro.js <UID> [meses|lifetime]
  *
  * Exemplos:
  *   node scripts/set-pro.js abc123xyz          → Pro por 12 meses
  *   node scripts/set-pro.js abc123xyz 3        → Pro por 3 meses
- *   node scripts/set-pro.js abc123xyz 9999     → Pro "eterno"
+ *   node scripts/set-pro.js abc123xyz lifetime → Pro vitalício (não rebaixa no webhook)
  */
 
 import admin from 'firebase-admin';
@@ -35,25 +35,47 @@ admin.initializeApp({
 const db = admin.firestore();
 
 const uid = process.argv[2];
-const months = parseInt(process.argv[3] ?? '12', 10);
+const planArg = (process.argv[3] || '12').toLowerCase();
+const isLifetime = ['lifetime', 'vitalicio', 'forever', 'permanent', '-1'].includes(planArg);
+const months = isLifetime ? 0 : parseInt(planArg, 10);
 
 if (!uid) {
-  console.error('❌  Informe o UID: node scripts/set-pro.js <UID> [meses]');
+  console.error('❌  Informe o UID: node scripts/set-pro.js <UID> [meses|lifetime]');
   process.exit(1);
 }
 
-const expiresAt = new Date();
-expiresAt.setMonth(expiresAt.getMonth() + months);
+if (!isLifetime && (Number.isNaN(months) || months <= 0)) {
+  console.error('❌  Meses inválidos. Use um número > 0 ou "lifetime".');
+  process.exit(1);
+}
+
+const payload = {
+  plan: 'pro',
+  updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+};
+
+if (isLifetime) {
+  payload.isLifetimePro = true;
+  payload.planOverride = 'pro';
+  payload.planExpiresAt = null;
+} else {
+  const expiresAt = new Date();
+  expiresAt.setMonth(expiresAt.getMonth() + months);
+  payload.isLifetimePro = false;
+  payload.planOverride = admin.firestore.FieldValue.delete();
+  payload.planExpiresAt = admin.firestore.Timestamp.fromDate(expiresAt);
+}
 
 await db.collection('users').doc(uid).set(
-  {
-    plan: 'pro',
-    planExpiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  },
+  payload,
   { merge: true }
 );
 
-const expiresStr = expiresAt.toLocaleDateString('pt-BR');
-console.log(`✅  Usuário ${uid} agora é Pro até ${expiresStr} (${months} meses)`);
+if (isLifetime) {
+  console.log(`✅  Usuário ${uid} agora é Pro vitalício (override ativo)`);
+} else {
+  const expiresAt = payload.planExpiresAt.toDate();
+  const expiresStr = expiresAt.toLocaleDateString('pt-BR');
+  console.log(`✅  Usuário ${uid} agora é Pro até ${expiresStr} (${months} meses)`);
+}
 process.exit(0);

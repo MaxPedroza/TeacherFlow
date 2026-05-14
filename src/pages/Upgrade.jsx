@@ -25,7 +25,7 @@ const formatDate = (date) =>
     : null;
 
 const Upgrade = () => {
-  const { isPro, planExpiresAt, loading } = usePlan();
+  const { isPro, planExpiresAt, isLifetimePro, loading } = usePlan();
   const { addToast } = useToast();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
@@ -75,6 +75,13 @@ const Upgrade = () => {
         <div className="upgrade-page__active-badge">
           <Crown size={16} />
           <span>Plano Pro ativo até {formatDate(planExpiresAt)}</span>
+        </div>
+      )}
+
+      {isPro && isLifetimePro && (
+        <div className="upgrade-page__active-badge">
+          <Crown size={16} />
+          <span>Plano Pro vitalício ativo</span>
         </div>
       )}
 

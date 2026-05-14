@@ -15,12 +15,14 @@ const usePlan = () => {
   const { user } = useAuthContext();
   const [plan, setPlan] = useState('free');
   const [planExpiresAt, setPlanExpiresAt] = useState(null);
+  const [isLifetimePro, setIsLifetimePro] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setPlan('free');
       setPlanExpiresAt(null);
+      setIsLifetimePro(false);
       setLoading(false);
       return;
     }
@@ -29,12 +31,17 @@ const usePlan = () => {
       if (snap.exists()) {
         const data = snap.data();
         const expires = data.planExpiresAt?.toDate?.() || null;
-        const isActive = expires ? expires > new Date() : false;
-        setPlan(isActive ? (data.plan || 'free') : 'free');
-        setPlanExpiresAt(expires);
+        const hasManualProOverride = data.planOverride === 'pro' || data.isLifetimePro === true;
+        const hasValidProByDate = data.plan === 'pro' && (expires ? expires > new Date() : true);
+        const shouldBePro = hasManualProOverride || hasValidProByDate;
+
+        setPlan(shouldBePro ? 'pro' : 'free');
+        setPlanExpiresAt(hasManualProOverride ? null : expires);
+        setIsLifetimePro(hasManualProOverride);
       } else {
         setPlan('free');
         setPlanExpiresAt(null);
+        setIsLifetimePro(false);
       }
       setLoading(false);
     });
@@ -44,7 +51,7 @@ const usePlan = () => {
 
   const isPro = plan === 'pro';
 
-  return { plan, isPro, planExpiresAt, loading };
+  return { plan, isPro, planExpiresAt, isLifetimePro, loading };
 };
 
 export default usePlan;

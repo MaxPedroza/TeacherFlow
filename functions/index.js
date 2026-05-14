@@ -51,6 +51,13 @@ const sendTransactionalEmail = async ({ to, subject, html }) => {
   }
 };
 
+const hasLockedProPlan = async (db, uid) => {
+  if (!uid) return false;
+  const userSnap = await db.doc(`users/${uid}`).get();
+  const userData = userSnap.data() || {};
+  return userData.planOverride === 'pro' || userData.isLifetimePro === true;
+};
+
 const resolveUserEmail = async ({ uid, emailFromProvider }) => {
   if (emailFromProvider) return String(emailFromProvider).trim();
   if (!uid) return '';
@@ -420,7 +427,7 @@ exports.mpWebhook = onRequest(
       await db.doc(`users/${uid}`).set(
         { plan: 'pro', planExpiresAt: expiresAt, updatedAt: new Date() },
         { merge: true }
-      );
+      );  
 
       const payerEmail = await resolveUserEmail({
         uid,
@@ -509,6 +516,22 @@ exports.mpWebhook = onRequest(
 
       console.log(`Plano PRO ativado para uid=${uid}`);
     } else if (['cancelled', 'paused'].includes(subscription.status)) {
+      const isLockedPro = await hasLockedProPlan(db, uid);
+
+      if (isLockedPro) {
+        await db.doc(`users/${uid}`).set(
+          {
+            mpSubscriptionId: subscription.id,
+            updatedAt: new Date(),
+          },
+          { merge: true }
+        );
+
+        console.log(`Assinatura ${subscription.status} recebida, mas plano Pro fixo preservado para uid=${uid}`);
+        res.sendStatus(200);
+        return;
+      }
+
       await db.doc(`users/${uid}`).set(
         {
           plan: 'free',
