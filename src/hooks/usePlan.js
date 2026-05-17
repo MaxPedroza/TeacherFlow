@@ -3,6 +3,10 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase.js';
 import { useAuthContext } from '../context/AuthContext.jsx';
 
+// Promo temporária: todos os usuários autenticados ficam como Pro.
+// Para reativar cobrança normal, altere para false.
+const FORCE_PRO_FOR_ALL_USERS = true;
+
 /**
  * Lê em tempo real o plano do professor autenticado em /users/{uid}.
  * Retorna:
@@ -23,6 +27,14 @@ const usePlan = () => {
       setPlan('free');
       setPlanExpiresAt(null);
       setIsLifetimePro(false);
+      setLoading(false);
+      return;
+    }
+
+    if (FORCE_PRO_FOR_ALL_USERS) {
+      setPlan('pro');
+      setPlanExpiresAt(null);
+      setIsLifetimePro(true);
       setLoading(false);
       return;
     }

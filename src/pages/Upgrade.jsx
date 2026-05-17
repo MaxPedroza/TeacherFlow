@@ -60,9 +60,14 @@ const Upgrade = () => {
         <Crown size={32} strokeWidth={1.5} />
         <div>
           <h1>Planos TeacherFlow</h1>
-          <p>Escolha o plano ideal para o seu estúdio.</p>
+          <p>Acesso Pro liberado para todos durante a campanha de crescimento.</p>
         </div>
       </header>
+
+      <div className="upgrade-page__success">
+        <Check size={20} />
+        <span>Pagamentos estão temporariamente desativados. Todos os usuários estão no Pro.</span>
+      </div>
 
       {urlStatus === 'sucesso' && (
         <div className="upgrade-page__success">
@@ -151,8 +156,7 @@ const Upgrade = () => {
       </div>
 
       <p className="upgrade-page__note">
-        Pagamento via PIX ou cartão de crédito. Cancele quando quiser pelo painel do Mercado Pago.
-        A ativação é automática e imediata após confirmação do pagamento.
+        Quando a campanha terminar, a cobrança mensal será reativada e os planos voltarão ao fluxo normal.
       </p>
     </section>
   );

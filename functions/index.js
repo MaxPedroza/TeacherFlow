@@ -16,6 +16,9 @@ const resendApiKey = defineSecret('RESEND_API_KEY');
 
 const DAILY_LIMIT_PER_USER = 50;
 const TRANSACTIONAL_FROM = 'TeacherFlow <onboarding@resend.dev>';
+// Promo temporária: pagamentos desativados enquanto todos os usuários ficam Pro.
+// Para reativar, altere para true.
+const PAYMENTS_ENABLED = false;
 
 const escapeHtml = (value) =>
   String(value || '')
@@ -301,6 +304,13 @@ exports.aiChat = onCall(
 exports.createCheckout = onCall(
   { secrets: [mpAccessToken], cors: true },
   async (request) => {
+    if (!PAYMENTS_ENABLED) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Pagamentos temporariamente desativados. Todos os usuários estão no plano Pro durante a campanha.'
+      );
+    }
+
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Usuário não autenticado.');
     }
@@ -346,6 +356,11 @@ exports.createCheckout = onCall(
 exports.mpWebhook = onRequest(
   { secrets: [mpAccessToken, mpWebhookSecret, resendApiKey] },
   async (req, res) => {
+    if (!PAYMENTS_ENABLED) {
+      res.sendStatus(200);
+      return;
+    }
+
     // MP envia GET para verificar o endpoint na configuração — responde 200
     if (req.method === 'GET') {
       res.sendStatus(200);
